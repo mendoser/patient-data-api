@@ -35,8 +35,11 @@ router.get('/critical', authMiddleware, async (req, res) => {
     try {
         const criticalPatients = await ClinicalData.find({
             $or: [
-                { type: 'Blood Pressure', reading: { $lt: '50/90' } },
-                { type: 'Blood Pressure', reading: { $gt: '60/150' } }
+                { type: 'Blood Pressure', reading: { $lt: '90/60 mmHg' } },
+                { type: 'Blood Pressure', reading: { $gt: '150/90 mmHg' } },
+                { type: 'Blood Oxygen Level', reading: { $lt: '90%' } },
+                { type: 'Heart Beat Rate', reading: { $gt: '100/min' } },
+                { type: 'Respiratory Rate', reading: { $gt: '25/min' } }
             ]
         }).populate('patientId');
 
@@ -52,6 +55,7 @@ router.get('/critical', authMiddleware, async (req, res) => {
 
         res.json(Object.values(groupedByPatient));
     } catch (err) {
+        console.error('Error fetching critical patients:', err);
         res.status(500).json({ error: 'Server error' });
     }
 });
@@ -67,7 +71,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
     }
 });
 
-// Add Tests for a Patient
+// POST /api/patients/:patientId/clinical-data
 router.post('/:patientId/clinical-data', authMiddleware, async (req, res) => {
     const { patientId } = req.params;
     const { type, reading } = req.body;
@@ -76,11 +80,15 @@ router.post('/:patientId/clinical-data', authMiddleware, async (req, res) => {
         const patient = await Patient.findById(patientId);
         if (!patient) return res.status(404).json({ msg: 'Patient not found' });
 
+        // Create a new clinical data entry with validation
         const newClinicalData = new ClinicalData({
             patientId: patientId,
             type: type,
             reading: reading
         });
+
+        // Validate and save the clinical data
+        await newClinicalData.validate(); // Validate first to catch any format errors
 
         await newClinicalData.save();
 
@@ -90,11 +98,12 @@ router.post('/:patientId/clinical-data', authMiddleware, async (req, res) => {
 
         res.status(201).json(newClinicalData);
     } catch (err) {
-        console.log('server error', err);
+        if (err.name === 'ValidationError') {
+            return res.status(400).json({ error: err.message });
+        }
+        console.error('Error saving clinical data:', err);
         res.status(500).json({ error: 'Server error' });
     }
 });
-
-
 
 module.exports = router;

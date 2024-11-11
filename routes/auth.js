@@ -22,6 +22,7 @@ router.post('/register', authMiddleware, async (req, res) => {
 
 router.post('/login', async (req, res) => {
     const { username, password } = req.body;
+    console.log('password', {username, password})
     try {
         const provider = await Provider.findOne({ username });
         if (!provider || !(await provider.isValidPassword(password))) {
