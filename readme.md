@@ -1,6 +1,6 @@
 BELOW IS THE .ENV CONFIG
 
-PORT=3000
+PORT=6000
 MONGODB_URI=mongodb://localhost:27017/patientDataDB
 JWT_SECRET=your_jwt_secret_key
 
