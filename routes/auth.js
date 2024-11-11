@@ -14,6 +14,7 @@ router.post('/register', authMiddleware, async (req, res) => {
     try {
         const provider = new Provider({ username, email, password });
         await provider.save();
+        console.log({ username, email, password })
         res.status(201).json({ msg: 'Provider registered successfully' });
     } catch (err) {
         res.status(400).json({ error: err.message });
